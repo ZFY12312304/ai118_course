@@ -1,3 +1,4 @@
+#导入数据库
 import json
 import os
 import zhipuai
@@ -10,6 +11,7 @@ import gradio as gr
 import base64
 from dotenv import load_dotenv, find_dotenv
 
+#解析json数据
 def parse_json(file_path):
     #处理数据   
     processed_data = []
@@ -25,15 +27,17 @@ def parse_json(file_path):
             contents.append({"content":content})
         return keywords, contents
 
-def api_embedding(input_text, client):
-    completion = client.embeddings.create(
-        model="text-embedding-v2",
-        input=input_text,
-        dimensions=768,
-    )
-    embedding = completion.data[0].embedding
-    return embedding
+#openai embedding接口
+# def api_embedding(input_text, client):
+#     completion = client.embeddings.create(
+#         model="text-embedding-v2",
+#         input=input_text,
+#         dimensions=768,
+#     )
+#     embedding = completion.data[0].embedding
+#     return embedding
 
+#本地模型embedding
 def load_embeddings(sentences):
 
     # 加载模型和分词器
@@ -49,11 +53,13 @@ def load_embeddings(sentences):
         model_output = model(**encoded_input)
         # Perform pooling. In this case, cls pooling.
         sentence_embeddings = model_output[0][:, 0]
-    
-    # normalize embeddings
+
+    # 将pytorch张量转换为列表，方便后续存储和使用
     sentence_embeddings = sentence_embeddings.numpy().tolist()
     
     return sentence_embeddings
+
+#LLM聊天接口
 def llm_chat(message):
     api_key = os.getenv('ZHIPUAI_API_KEY')
     if not api_key:
@@ -69,7 +75,8 @@ def llm_chat(message):
 # 全局变量
 client = None
 collection = None
-
+#聊天主逻辑
+#处理用户消息，包括图片和文本，检索知识库内容，构建提示词，调用大模型生成回复，并维护聊天历史
 def chat_msg(message, history):
     global client, collection
     
@@ -129,8 +136,9 @@ def chat_msg(message, history):
             history = [{"role": "assistant", "content": error_message}]
     
     return history
+#环境变量加载
 load_dotenv(find_dotenv())
-
+#主程序入口
 if __name__ == "__main__":
     # 加载环境变量
     # load_dotenv(find_dotenv())
